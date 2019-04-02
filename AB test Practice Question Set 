@@ -1,0 +1,1942 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# <center><font color='blue'>Class 11 Homework Assignment<br>by Steven D. Moffitt, Ph.D.<br>SJSU CIES Data 296</font></center>"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## <font color=\"magenta\">For this assignment, all imports and datasets needed are given in two cells at the bottom of the problem statement.<br> Total Points: 50</font>"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## <font color='blue'>Part I: Using the link below, answer the following questions for examples 6-10.</font>\n",
+    "\n",
+    "<center>https://www.designforfounders.com/ab-testing-examples/</center>\n",
+    "\n",
+    "(1 point for each item - total 15 pts)\n",
+    "\n",
+    "Example 6: \n",
+    "-  1.1 How did Rummycircle generate leads on Facebook?\n",
+    "       Ans: Rummycircle asked users to comment on their post. \n",
+    "-  1.2 What kind of test was done to determine engagement for mobile users?\n",
+    "       Ans: A/B Testing on different user groups, one seeing the invitation to comment. \n",
+    "-  1.3 What did these tests show that about engagement questioning of mobile users?\n",
+    "       Ans: When mobile users are asked to comment, they are less likely to sign up email. \n",
+    "\n",
+    "Example 7: How did the Google+ \"less obtrusive ad\" affect\n",
+    "-  2.1 The percentage of mobile users?\n",
+    "       Ans: Mobile user percentage went up by 17%. \n",
+    "-  2.2 The percentage of installs?\n",
+    "       Ans: There is barely an impact on percentage of installs. \n",
+    "\n",
+    "Example 8:\n",
+    "-  3.1 What is website navigation?\n",
+    "       Ans: The top bar that directs users to different sites or segments of the website. \n",
+    "-  3.2 What was the increase in conversions when *Yuppiechef* turned off navigation?\n",
+    "       Ans: The conversion rate went up by 100%. \n",
+    "-  3.3 Why might turning off navigation be preferred by customers?\n",
+    "       Ans: There is less distractions to customers. \n",
+    "\n",
+    "Example 9: The Dutch company Centrall Behmeer Achmea did a surprising test of a single, seemingly irrelevant link.\n",
+    "-  4.1 What was the single link they added to the original page?\n",
+    "       Ans: A link to share on LinkedIn. \n",
+    "-  4.2 What did that link do?\n",
+    "       Ans: The link let users share the post on LinkedIn. \n",
+    "-  4.3 How did that link affect the main CTA?\n",
+    "       Ans: CTA rate went up by 244.7%. \n",
+    "-  4.4 What is a \"Hobson's Choice\" and how might it explain the results?\n",
+    "       Ans: Hobson's Choice makes the difficult decision of whether or not to click become deciding which button to click instead.\n",
+    "       It is harder for users to share it on LinkedIn than to click action button. \n",
+    "\n",
+    "Example 10:\n",
+    "-  5.1 ServerDensity's original page is quite different from the test. If you wanted to determine which changes were responsible, how would you design a follow up test?\n",
+    "       Ans: Use A/B testing to compare and test each of the possible features. \n",
+    "-  5.2 What was the increase in revenue?\n",
+    "       Ans: The revenue went up by 114%. \n",
+    "-  5.3 Speculate on what in the test page might be factors in that increase.\n",
+    "       Ans: Three sign up action buttons, clean design. \n",
+    "---"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## <font color='blue'>Part II: The problem below assumes the same environment and problem terms in the **Udacity** for the Class 11 notebook."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "_cell_guid": "1055062b-40d7-400c-8721-653f71250bbc",
+    "_uuid": "d4200f0848220af981f13946919ebf0c5cee0f00"
+   },
+   "source": [
+    "## 1 Choosing Metrics<a class=\"anchor\" id=\"metric\"></a>\n",
+    "\n",
+    "The same metrics will be used:\n",
+    "  \n",
+    "### 1.1 Invariant Metrics - Consistency Checks <a class=\"anchor\" id=\"invariant\"></a>\n",
+    "\n",
+    "| Metric Name  | Metric Formula  | MinChng  | Notation |\n",
+    "|:-|:-|:-:|:-:|\n",
+    "| Number of Cookies in Course Overview Page  | # unique daily cookies on page | 3000 cookies  | $C_k$ |\n",
+    "| Number of Clicks on Free Trial Button  | # unique daily cookies who clicked  | 240 clicks | $C_l$ |\n",
+    "| Free Trial button Click-Through-Probability (CTP)  | $\\frac{C_l}{C_k}$ | 0.01  | $CTP$ |   \n",
+    "  \n",
+    "### 1.2 Evaluation Metrics - Performance Indicators <a class=\"anchor\" id=\"evaluation\"></a>\n",
+    "| Metric Name  | Metric Formula  | MinChng  | Notation |\n",
+    "|:-:|:-:|:-:|:-:|\n",
+    "| Gross Conversion   |  $\\frac{enrolled}{C_l}$  | 0.01  | $Conversion_{Gross}$ |\n",
+    "| Retention   | $\\frac{paid}{enrolled}$  | 0.01  | $Retention$ |\n",
+    "| Net Conversion  |  $\\frac{paid}{C_l}$  | 0.0075 | $Conversion_{Net}$ |"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "_cell_guid": "8532b7b5-e365-4468-aa5c-839114fbe07b",
+    "_uuid": "dc01c453a9b39e69a4b25699444828f42814f490"
+   },
+   "source": [
+    "## 2 Baselines for the Metrics are as Follows<a class=\"anchor\" id=\"baseline\"></a>\n",
+    "Before we start our experiment we should know how these metrics behaved before the change - their \"baseline\" values.\n",
+    "\n",
+    "| Item | Description  | Estimator  |\n",
+    "|:-:|:-:|:-:|\n",
+    "| Number of cookies | Daily unique cookies to view course overview page  | 60,000  |\n",
+    "| Number of clicks | Daily unique cookies to click Free Trial button  | 5,600 |\n",
+    "| Number of enrollments | Free Trial enrollments per day  | 850  |\n",
+    "| CTP | CTP on Free Trial button  | 0.16  |\n",
+    "| Gross Conversion | Probability of enrolling, given a click  | 0.15  |\n",
+    "| Retention | Probability of payment, given enrollment  | 0.40 |\n",
+    "| Net Conversion | Probability of payment, given click  | 0.15 |"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "(2 points per item: total 16)\n",
+    "\n",
+    "Using the above information and abbreviations (GC=Gross Conversions, R=Retentions, NC=Net conversions), and using the datasets *control* and *experiment* calculate the following:\n",
+    "-  Standard deviations for GC, R, and NC.\n",
+    "-  Sample Sizes for GC, R and NC.\n",
+    "-  Is the Sample Size for R still too large? If so omit it.\n",
+    "-  Read the data from 'data/experiment.csv' and 'data/control.csv'.\n",
+    "-  Is there enough data for the required sample sizes?\n",
+    "-  Perform consistency checks. Are they consistent?\n",
+    "-  Which results, if any, are significant?\n",
+    "-  Perform a sign test to corroborate the results of the tests."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## <font color='blue'>Part III: t-tests</font> "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "(1 point per item - total 13 points)\n",
+    "\n",
+    "Using the data sets *class1_data*, *class2_data* and *paired_data_df*, \n",
+    "answer the following questions:\n",
+    "\n",
+    "1. For a One sample t-test:\n",
+    "\n",
+    "  -  Test class1_data mean against 37.\n",
+    "  -  What is the test statistic value for the one sample t-test?\n",
+    "  -  What is the p-value of the test?\n",
+    "  -  Calculate a 95% confidence interval.\n",
+    "  -  Calculate a 99% confidence interval.<br><br>  \n",
+    "  \n",
+    "2. For a two sample t-test:\n",
+    "\n",
+    "  -  Perform a two-sample t-test of *class1_data* vs *class2_data*\n",
+    "  -  What is the value test statistic?\n",
+    "  -  What is the p-value?\n",
+    "  -  Is the test significant at the 5% level?<br><br>  \n",
+    "  \n",
+    "3. For a paired t-test:\n",
+    "\n",
+    "  -  Perform a paired t-test on the paired_data_df variables \"weight_before\" and \"weight_after\".\n",
+    "  -   What is the value of the test statistic?\n",
+    "  -   What is the p-value?\n",
+    "  -   Is the difference significant at the 5% level?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## <font color='blue'>Part IV: Bootstrap</font> \n",
+    "\n",
+    "(2 points per item - total 6 points)\n",
+    "\n",
+    "Using datasets *ctrl* and *test* perform a bootstrap comparison of means and answer the following questions:\n",
+    "\n",
+    "-  Are the means of control (ctrl) and test (test) significantly different at the 5% level?\n",
+    "-  What is the bootstrap estimate of the difference: $\\bar{x}_{test} - \\bar{x}_{ctrl}$?\n",
+    "-  Calculate a confidence interval for the difference in means."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## <font color=\"magenta\">Insert the two cells below at the beginning of your assignment. They read all the datasets required, and unless you use a package not covered in class, contain all imports you will need.</font>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import math\n",
+    "import numpy as np\n",
+    "import pandas.tseries as tseries\n",
+    "import pandas as pd\n",
+    "import scipy.optimize as optimize\n",
+    "import scipy.stats as stats\n",
+    "from scipy.stats import norm# import libraries\n",
+    "import matplotlib.pyplot as plt\n",
+    "import seaborn as sns\n",
+    "import statsmodels.api as sm\n",
+    "from statsmodels.base.model import GenericLikelihoodModel\n",
+    "%matplotlib inline"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "control=pd.read_csv(\"control_data.csv\")\n",
+    "experiment=pd.read_csv(\"experiment_data.csv\")\n",
+    "test = np.fromfile('test.dat', dtype=float) \n",
+    "ctrl = np.fromfile('ctrl.dat',dtype=float)\n",
+    "pop_data = np.fromfile(\"pop_data.dat\", dtype=int)\n",
+    "class1_data = np.fromfile(\"class1_data.dat\", dtype=int)\n",
+    "class2_data = np.fromfile(\"class2_data.dat\", dtype=int)\n",
+    "paired_data_df = pd.read_pickle(\"ab_data_df\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "_cell_guid": "3f84c57a-4c16-425d-9230-d32c9222161b",
+    "_uuid": "fac12ff041fc6e22f790ff4836a09c487f5bae14"
+   },
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## <font color='blue'>Part II: The problem below assumes the same environment and problem terms in the **Udacity** for the Class 11 notebook.\n",
+    "(2 points per item: total 16)\n",
+    "\n",
+    "Using the above information and abbreviations (GC=Gross Conversions, R=Retentions, NC=Net conversions), and using the datasets *control* and *experiment* calculate the following:\n",
+    "-  Standard deviations for GC, R, and NC.\n",
+    "-  Sample Sizes for GC, R and NC.\n",
+    "-  Is the Sample Size for R still too large? If so omit it.\n",
+    "-  Read the data from 'data/experiment.csv' and 'data/control.csv'.\n",
+    "-  Is there enough data for the required sample sizes?\n",
+    "-  Perform consistency checks. Are they consistent?\n",
+    "-  Which results, if any, are significant?\n",
+    "-  Perform a sign test to corroborate the results of the tests."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#Let's place this estimators into a dictionary for ease of use later\n",
+    "baseline = {\"Cookies\":60000,\"Clicks\":5600,\"Enrollments\":850,\"CTP\":0.16,\"GConversion\":0.15,\n",
+    "           \"Retention\":0.40,\"NConversion\":0.15}"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "1. Standard deviations for GC, R, and NC.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.0048"
+      ]
+     },
+     "execution_count": 4,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "\n",
+    "# Let's get the p and n we need for Gross Conversion (GC) and compute\n",
+    "# the Sample Standard Deviation(sd) rounded to 4 decimal digits.\n",
+    "GC={}\n",
+    "GC[\"minch\"]=0.01\n",
+    "GC[\"p\"]=baseline[\"GConversion\"]\n",
+    "# p is given in this case - or we could calculate it from enrollments/clicks\n",
+    "GC[\"n\"]=baseline[\"Clicks\"]\n",
+    "GC[\"sd\"]=round(math.sqrt((GC[\"p\"]*(1-GC[\"p\"]))/GC[\"n\"]),4)\n",
+    "GC[\"sd\"]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.0168"
+      ]
+     },
+     "execution_count": 5,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Let's get the p and n we need for Retention(R)\n",
+    "# and compute the Standard Deviation(sd) rounded to 4 decimal digits.\n",
+    "R={}\n",
+    "R[\"minch\"]=0.01\n",
+    "R[\"p\"]=baseline[\"Retention\"]\n",
+    "R[\"n\"]=baseline[\"Enrollments\"]\n",
+    "R[\"sd\"]=round(math.sqrt((R[\"p\"]*(1-R[\"p\"]))/R[\"n\"]),4)\n",
+    "R[\"sd\"]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.0048"
+      ]
+     },
+     "execution_count": 6,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Let's get the p and n we need for Net Conversion (NC) and\n",
+    "# compute the Standard Deviation (sd) rounded to 4 decimal digits.\n",
+    "NC={}\n",
+    "NC[\"minch\"]=0.0075\n",
+    "NC[\"p\"]=baseline[\"NConversion\"]\n",
+    "NC[\"n\"]=baseline[\"Clicks\"]\n",
+    "NC[\"sd\"]=round(math.sqrt((NC[\"p\"]*(1-NC[\"p\"]))/NC[\"n\"]),4)\n",
+    "NC[\"sd\"]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "2. Sample Sizes for GC, R and NC.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "\n",
+    "#Inputs: required alpha value (alpha should already fit the required test)\n",
+    "#Returns: z-score for given alpha\n",
+    "def get_z_score(alpha):\n",
+    "    return norm.ppf(alpha)\n",
+    "\n",
+    "# Inputs p-baseline conversion rate which is our estimated p and d-minimum detectable change\n",
+    "# Returns\n",
+    "def get_sds(p,d):\n",
+    "    sd1=math.sqrt(2*p*(1-p))\n",
+    "    sd2=math.sqrt(p*(1-p)+(p+d)*(1-(p+d)))\n",
+    "    sds=[sd1,sd2]\n",
+    "    return sds\n",
+    "\n",
+    "# Inputs:sd1-sd for the baseline,sd2-sd for the expected change,alpha,beta,d-MinChng,p-baseline estimate p\n",
+    "# Returns: the minimum sample size required per group according to metric denominator\n",
+    "def get_sampSize(sds,alpha,beta,d):\n",
+    "    n=pow((get_z_score(1-alpha)*sds[0]+get_z_score(1-beta)*sds[1]),2)/pow(d,2)\n",
+    "    return n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "GC[\"d\"]=0.01\n",
+    "R[\"d\"]=0.01\n",
+    "NC[\"d\"]=0.0075"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "15909.0"
+      ]
+     },
+     "execution_count": 9,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "GC[\"SampSize\"]=round(get_sampSize(get_sds(GC[\"p\"],GC[\"d\"]),0.05,0.2,GC[\"d\"]))\n",
+    "GC[\"SampSize\"]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "This means we need at least 15909 cookies who click the Free Trial button - per group! Finally, the total quantity of cookies (which are then assigned to either A or B) for the Gross Conversion metric is:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "198862.0"
+      ]
+     },
+     "execution_count": 10,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "GC[\"SampSize\"]=round(GC[\"SampSize\"]/baseline[\"CTP\"]*2)\n",
+    "GC[\"SampSize\"]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "29716.0"
+      ]
+     },
+     "execution_count": 11,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Getting a nice integer value\n",
+    "R[\"SampSize\"]=round(get_sampSize(get_sds(R[\"p\"],R[\"d\"]),0.05,0.2,R[\"d\"]))\n",
+    "R[\"SampSize\"]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "This means that we need 29,716 users who enrolled per group! We have to first convert this to cookies who clicked, and then to cookies who viewed the page, then finally to multiply by two for both groups:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "2476333.3333333335"
+      ]
+     },
+     "execution_count": 12,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "R[\"SampSize\"]=R[\"SampSize\"]/(baseline[\"CTP\"]*baseline[\"GConversion\"])*2\n",
+    "R[\"SampSize\"]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The sample size for Retention is too large and does not make sense to test here. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "28220.0"
+      ]
+     },
+     "execution_count": 13,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Getting a nice integer value\n",
+    "NC[\"SampSize\"]=round(get_sampSize(get_sds(NC[\"p\"],NC[\"d\"]),0.05,0.2,NC[\"d\"]))\n",
+    "NC[\"SampSize\"]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "So, needing 28,220 cookies who click per group will require:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "352750.0"
+      ]
+     },
+     "execution_count": 14,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "NC[\"SampSize\"]=NC[\"SampSize\"]/baseline[\"CTP\"]*2\n",
+    "NC[\"SampSize\"]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "3. Is the Sample Size for R still too large? If so omit it.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Yes, the sample size for R is too large; in fact it is over 2.4million users. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "4.  Read the data from 'data/experiment.csv' and 'data/control.csv'.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "control=pd.read_csv(\"control_data.csv\")\n",
+    "experiment=pd.read_csv(\"experiment_data.csv\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Date</th>\n",
+       "      <th>Pageviews</th>\n",
+       "      <th>Clicks</th>\n",
+       "      <th>Enrollments</th>\n",
+       "      <th>Payments</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>Sat, Oct 11</td>\n",
+       "      <td>8495</td>\n",
+       "      <td>755</td>\n",
+       "      <td>147</td>\n",
+       "      <td>77</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>Sun, Oct 12</td>\n",
+       "      <td>10012</td>\n",
+       "      <td>856</td>\n",
+       "      <td>161</td>\n",
+       "      <td>77</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>Mon, Oct 13</td>\n",
+       "      <td>11562</td>\n",
+       "      <td>999</td>\n",
+       "      <td>183</td>\n",
+       "      <td>104</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>Tue, Oct 14</td>\n",
+       "      <td>10858</td>\n",
+       "      <td>919</td>\n",
+       "      <td>171</td>\n",
+       "      <td>115</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>Wed, Oct 15</td>\n",
+       "      <td>11015</td>\n",
+       "      <td>920</td>\n",
+       "      <td>179</td>\n",
+       "      <td>70</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "          Date  Pageviews  Clicks  Enrollments  Payments\n",
+       "0  Sat, Oct 11       8495     755          147        77\n",
+       "1  Sun, Oct 12      10012     856          161        77\n",
+       "2  Mon, Oct 13      11562     999          183       104\n",
+       "3  Tue, Oct 14      10858     919          171       115\n",
+       "4  Wed, Oct 15      11015     920          179        70"
+      ]
+     },
+     "execution_count": 16,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "control.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Date</th>\n",
+       "      <th>Pageviews</th>\n",
+       "      <th>Clicks</th>\n",
+       "      <th>Enrollments</th>\n",
+       "      <th>Payments</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>Sat, Oct 11</td>\n",
+       "      <td>8873</td>\n",
+       "      <td>788</td>\n",
+       "      <td>120</td>\n",
+       "      <td>39</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>Sun, Oct 12</td>\n",
+       "      <td>10681</td>\n",
+       "      <td>902</td>\n",
+       "      <td>133</td>\n",
+       "      <td>104</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>Mon, Oct 13</td>\n",
+       "      <td>12052</td>\n",
+       "      <td>1016</td>\n",
+       "      <td>166</td>\n",
+       "      <td>90</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>Tue, Oct 14</td>\n",
+       "      <td>11347</td>\n",
+       "      <td>951</td>\n",
+       "      <td>158</td>\n",
+       "      <td>105</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>Wed, Oct 15</td>\n",
+       "      <td>11261</td>\n",
+       "      <td>956</td>\n",
+       "      <td>161</td>\n",
+       "      <td>108</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "          Date  Pageviews  Clicks  Enrollments  Payments\n",
+       "0  Sat, Oct 11       8873     788          120        39\n",
+       "1  Sun, Oct 12      10681     902          133       104\n",
+       "2  Mon, Oct 13      12052    1016          166        90\n",
+       "3  Tue, Oct 14      11347     951          158       105\n",
+       "4  Wed, Oct 15      11261     956          161       108"
+      ]
+     },
+     "execution_count": 17,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "experiment.head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "5. Is there enough data for the required sample sizes?\n",
+    "\n",
+    "   Ans: Yes, i think there is enough data for sample sizes but only enouch for GC test, not enough for NC nor R (which we omitted already). "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "6. Perform consistency checks. Are they consistent?\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "These checks help verify that the experiment was conducted as expected and that other factors did not influence the data which we collected. This also makes sure that data collection was correct.\n",
+    "\n",
+    "We have 3 Invariant metrics:: \n",
+    "* Number of Cookies in Course Overview Page\n",
+    "* Number of Clicks on Free Trial Button\n",
+    "* Free Trial button Click-Through-Probability\n",
+    "\n",
+    "6.1 Consistency Checks for differences between counts \n",
+    "\n",
+    "Number of cookies who viewed the course overview page - Starting from this simple invariant metric, we want to count the total number of cookie pageviews we diverted to each group and see if there is a significant difference in the number of cookies. A significant difference will imply a biased experiment that we should not rely on it's results."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "number of pageviews in control: 184028\n",
+      "number of Pageviewsin experiment: 191806\n",
+      "There is no significant difference between control/experiment group size.\n"
+     ]
+    }
+   ],
+   "source": [
+    "pageviews_cont=control['Pageviews'].sum()\n",
+    "pageviews_exp=experiment['Pageviews'].sum()\n",
+    "pageviews_total=pageviews_cont+pageviews_exp\n",
+    "print (\"number of pageviews in control:\", pageviews_cont)\n",
+    "print (\"number of Pageviewsin experiment:\" ,pageviews_exp)\n",
+    "print(f'There is no significant difference between control/experiment group size.')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "The confidence interval is from 0 to 0.5013 ; Is 0.4897 inside this range?\n"
+     ]
+    }
+   ],
+   "source": [
+    "p=0.5\n",
+    "alpha=0.05\n",
+    "p_hat=round(pageviews_cont/(pageviews_total),4)\n",
+    "sd=math.sqrt(p*(1-p)/(pageviews_total))\n",
+    "ME=round(get_z_score(1-alpha)*sd,4)\n",
+    "print (\"The confidence interval is from 0 to\",p+ME,\"; Is\",p_hat,\"inside this range?\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The p_hat is within the range; so the difference in sample size between control/experiment groups is expected. So this invariant metric, number of cookies, consistency test has passed. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "6.2 Number of cookies who clicked the Free Trial Button\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "The confidence interval is between 0 and 0.5047 ; Is 0.4902 inside this range?\n"
+     ]
+    }
+   ],
+   "source": [
+    "clicks_cont=control['Clicks'].sum()\n",
+    "clicks_exp=experiment['Clicks'].sum()\n",
+    "clicks_total=clicks_cont+clicks_exp\n",
+    "\n",
+    "p_hat=round(clicks_cont/clicks_total,4)\n",
+    "sd=math.sqrt(p*(1-p)/clicks_total)\n",
+    "ME=round(get_z_score(1-alpha)*sd,4)\n",
+    "print (\"The confidence interval is between 0 and\",p+ME,\"; Is\",p_hat,\"inside this range?\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The p_hat is within the range; so the difference in number of cookies who click the free trial button between control/experiment groups is expected. So this invariant metric, number of clicks, consistency test has passed."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "6.3 Click-through-probability (CTP) of the Free Trial Button\n",
+    "In this case, we want to make sure the proportion of clicks given a pageview (our observed CTP) is about the same in both groups (since this was not expected to change in the experiment). In order to check this out we will calculate the CTP in each group and calculate a confidence interval for the expected difference between them. \n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "The confidence interval is between 0 and 0.0015 ; Is -0.0002 within this range?\n"
+     ]
+    }
+   ],
+   "source": [
+    "ctp_cont=clicks_cont/pageviews_cont\n",
+    "ctp_exp=clicks_exp/pageviews_exp\n",
+    "d_hat=round(ctp_exp-ctp_cont,4)\n",
+    "p_pooled=clicks_total/pageviews_total\n",
+    "sd_pooled=math.sqrt(p_pooled*(1-p_pooled)*(1/pageviews_cont+1/pageviews_exp))\n",
+    "ME=round(get_z_score(1-alpha)*sd_pooled,4)\n",
+    "print (\"The confidence interval is between 0 and\",0+ME,\"; Is\",d_hat,\"within this range?\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "7. Which results, if any, are significant?\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "In the consistency test, only the Click-through-probability CTP rate of the free trial buton is significant as it does not fall into the range. But if we continue the work, then we move on to look at the changes in the evaluation metrics between control and experiment groups, to check if they are practically significant and statistically significant.Unfortunately, neither of the gross conversion nor net conversion rate is practically nor statistically significant. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Count the total clicks from complete records only\n",
+    "clicks_cont=control[\"Clicks\"].loc[control[\"Enrollments\"].notnull()].sum()\n",
+    "clicks_exp=experiment[\"Clicks\"].loc[experiment[\"Enrollments\"].notnull()].sum()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "The change due to the experiment is -2.64 %\n",
+      "The Critical Point for a One-Sided Test is:  0.74 %]\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Gross Conversion - number of enrollments divided by number of clicks\n",
+    "enrollments_cont=control[\"Enrollments\"].sum()\n",
+    "enrollments_exp=experiment[\"Enrollments\"].sum()\n",
+    "\n",
+    "GC_cont=enrollments_cont/clicks_cont\n",
+    "GC_exp=enrollments_exp/clicks_exp\n",
+    "GC_pooled=(enrollments_cont+enrollments_exp)/(clicks_cont+clicks_exp)\n",
+    "GC_sd_pooled=math.sqrt(GC_pooled*(1-GC_pooled)*(1/clicks_cont+1/clicks_exp))\n",
+    "GC_ME=round(get_z_score(1-alpha)*GC_sd_pooled,4)\n",
+    "GC_diff=round(GC_exp-GC_cont,4)\n",
+    "print(\"The change due to the experiment is\",GC_diff*100,\"%\")\n",
+    "print(\"The Critical Point for a One-Sided Test is: \",GC_ME*100,\"%]\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Accept  H0  if  z_score≤0.74%, and Reject  H0  if  z_score>0.74% . \n",
+    "Since  −2.64%<0.72%  the null hypothesis is accepted, so we conclude that there is a low probability the experiment improves the Click-through-probability. But  −2.64%<1.0% , the minimum practical improvement that would be acceptable. Therefore we find no evidence fin favor of switching to the experimental method, at least on the Gross Conversion metric. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "The change due to the experiment is -1.08 %\n",
+      "The Critical Point for a One-sided test is:  0.59 %]\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Net Conversion - number of payments divided by number of clicks\n",
+    "payments_cont=control[\"Payments\"].sum()\n",
+    "payments_exp=experiment[\"Payments\"].sum()\n",
+    "\n",
+    "NC_cont=payments_cont/clicks_cont\n",
+    "NC_exp=payments_exp/clicks_exp\n",
+    "NC_pooled=(payments_cont+payments_exp)/(clicks_cont+clicks_exp)\n",
+    "NC_sd_pooled=math.sqrt(NC_pooled*(1-NC_pooled)*(1/clicks_cont+1/clicks_exp))\n",
+    "NC_ME=round(get_z_score(1-alpha)*NC_sd_pooled,4)\n",
+    "NC_diff=round(NC_exp-NC_cont,4)\n",
+    "print(\"The change due to the experiment is\",NC_diff*100,\"%\")\n",
+    "print(\"The Critical Point for a One-sided test is: \",NC_ME*100,\"%]\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "In this case we got a change size of less than $0.0075\\%$ so the empirical findinga are not practically significant. But they are also not statistically significant since $-1.08\\% < 0.07\\%$. Unfortunately, we could not test Retentions directly, but this result moots that problem since reducing the number of payees relative to click throughs is the opposite of what is desired."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "8. Perform a sign test to corroborate the results of the tests.\n",
+    "\n",
+    "\n",
+    "We can use a sign test to test a trend in the changes we observed in daily data. We compute the metric's value per day and then count on how many days the metric was lower in the experimental group and this will be the number of successes. Once this is defined we can look at the proportion of days of success out of all the available days.  "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Date_cont           18\n",
+       "Pageviews_cont      18\n",
+       "Clicks_cont         18\n",
+       "Enrollments_cont    18\n",
+       "Payments_cont       18\n",
+       "Date_exp            18\n",
+       "Pageviews_exp       18\n",
+       "Clicks_exp          18\n",
+       "Enrollments_exp     18\n",
+       "Payments_exp        18\n",
+       "dtype: int64"
+      ]
+     },
+     "execution_count": 25,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#let's first create the dataset we need for this:\n",
+    "# start by merging the two datasets\n",
+    "full=control.join(other=experiment,how=\"inner\",lsuffix=\"_cont\",rsuffix=\"_exp\")\n",
+    "#Let's look at what we got\n",
+    "full.count()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Date_cont           18\n",
+       "Pageviews_cont      18\n",
+       "Clicks_cont         18\n",
+       "Enrollments_cont    18\n",
+       "Payments_cont       18\n",
+       "Date_exp            18\n",
+       "Pageviews_exp       18\n",
+       "Clicks_exp          18\n",
+       "Enrollments_exp     18\n",
+       "Payments_exp        18\n",
+       "dtype: int64"
+      ]
+     },
+     "execution_count": 26,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#now we only need the complete data records\n",
+    "full=full.loc[full[\"Enrollments_cont\"].notnull()]\n",
+    "full.count()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Date_cont</th>\n",
+       "      <th>Pageviews_cont</th>\n",
+       "      <th>Clicks_cont</th>\n",
+       "      <th>Enrollments_cont</th>\n",
+       "      <th>Payments_cont</th>\n",
+       "      <th>Date_exp</th>\n",
+       "      <th>Pageviews_exp</th>\n",
+       "      <th>Clicks_exp</th>\n",
+       "      <th>Enrollments_exp</th>\n",
+       "      <th>Payments_exp</th>\n",
+       "      <th>GC</th>\n",
+       "      <th>NC</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>Sat, Oct 11</td>\n",
+       "      <td>8495</td>\n",
+       "      <td>755</td>\n",
+       "      <td>147</td>\n",
+       "      <td>77</td>\n",
+       "      <td>Sat, Oct 11</td>\n",
+       "      <td>8873</td>\n",
+       "      <td>788</td>\n",
+       "      <td>120</td>\n",
+       "      <td>39</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>Sun, Oct 12</td>\n",
+       "      <td>10012</td>\n",
+       "      <td>856</td>\n",
+       "      <td>161</td>\n",
+       "      <td>77</td>\n",
+       "      <td>Sun, Oct 12</td>\n",
+       "      <td>10681</td>\n",
+       "      <td>902</td>\n",
+       "      <td>133</td>\n",
+       "      <td>104</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>Mon, Oct 13</td>\n",
+       "      <td>11562</td>\n",
+       "      <td>999</td>\n",
+       "      <td>183</td>\n",
+       "      <td>104</td>\n",
+       "      <td>Mon, Oct 13</td>\n",
+       "      <td>12052</td>\n",
+       "      <td>1016</td>\n",
+       "      <td>166</td>\n",
+       "      <td>90</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>Tue, Oct 14</td>\n",
+       "      <td>10858</td>\n",
+       "      <td>919</td>\n",
+       "      <td>171</td>\n",
+       "      <td>115</td>\n",
+       "      <td>Tue, Oct 14</td>\n",
+       "      <td>11347</td>\n",
+       "      <td>951</td>\n",
+       "      <td>158</td>\n",
+       "      <td>105</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>Wed, Oct 15</td>\n",
+       "      <td>11015</td>\n",
+       "      <td>920</td>\n",
+       "      <td>179</td>\n",
+       "      <td>70</td>\n",
+       "      <td>Wed, Oct 15</td>\n",
+       "      <td>11261</td>\n",
+       "      <td>956</td>\n",
+       "      <td>161</td>\n",
+       "      <td>108</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "     Date_cont  Pageviews_cont  Clicks_cont  Enrollments_cont  Payments_cont  \\\n",
+       "0  Sat, Oct 11            8495          755               147             77   \n",
+       "1  Sun, Oct 12           10012          856               161             77   \n",
+       "2  Mon, Oct 13           11562          999               183            104   \n",
+       "3  Tue, Oct 14           10858          919               171            115   \n",
+       "4  Wed, Oct 15           11015          920               179             70   \n",
+       "\n",
+       "      Date_exp  Pageviews_exp  Clicks_exp  Enrollments_exp  Payments_exp  GC  \\\n",
+       "0  Sat, Oct 11           8873         788              120            39   0   \n",
+       "1  Sun, Oct 12          10681         902              133           104   0   \n",
+       "2  Mon, Oct 13          12052        1016              166            90   0   \n",
+       "3  Tue, Oct 14          11347         951              158           105   0   \n",
+       "4  Wed, Oct 15          11261         956              161           108   0   \n",
+       "\n",
+       "   NC  \n",
+       "0   0  \n",
+       "1   1  \n",
+       "2   0  \n",
+       "3   0  \n",
+       "4   1  "
+      ]
+     },
+     "execution_count": 27,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Perfect! Now, derive a new column for each metric, so we have it's daily values\n",
+    "# We need a 1 if the experiment value is greater than the control value=\n",
+    "x=full['Enrollments_cont']/full['Clicks_cont']\n",
+    "y=full['Enrollments_exp']/full['Clicks_exp']\n",
+    "full['GC'] = np.where(x<y,1,0)\n",
+    "# The same now for net conversion\n",
+    "z=full['Payments_cont']/full['Clicks_cont']\n",
+    "w=full['Payments_exp']/full['Clicks_exp']\n",
+    "full['NC'] = np.where(z<w,1,0)\n",
+    "full.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 28,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "No. of cases for GC: 1 \n",
+      " No. of cases for NC: 6 \n",
+      " No. of total cases 18\n"
+     ]
+    }
+   ],
+   "source": [
+    "GC_x=full.GC[full[\"GC\"]==1].count()\n",
+    "NC_x=full.NC[full[\"NC\"]==1].count()\n",
+    "n=full.NC.count()\n",
+    "print(\"No. of cases for GC:\",GC_x,'\\n',\n",
+    "      \"No. of cases for NC:\",NC_x,'\\n',\n",
+    "      \"No. of total cases\",n)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 29,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#first a function for calculating probability of x=number of successes\n",
+    "def get_prob(x,n):\n",
+    "    p=round(math.factorial(n)/(math.factorial(x)*math.factorial(n-x))*0.5**x*0.5**(n-x),4)\n",
+    "    return p\n",
+    "#next a function to compute the pvalue from probabilities of maximum x\n",
+    "def get_2side_pvalue(x,n):\n",
+    "    p=0\n",
+    "    for i in range(0,x+1):\n",
+    "        p=p+get_prob(i,n)\n",
+    "    return 2*p"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 30,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "GC Change is significant if 0.0002 is smaller than 0.05\n",
+      "NC Change is significant if 0.238 is smaller than 0.05\n"
+     ]
+    }
+   ],
+   "source": [
+    "print (\"GC Change is significant if\",get_2side_pvalue(GC_x,n),\"is smaller than 0.05\")\n",
+    "print (\"NC Change is significant if\",get_2side_pvalue(NC_x,n),\"is smaller than 0.05\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "We get a different conclusion from our that for effect sizes: the change in Gross conversion was not significant but the sign test is significant. Neither test was significant for Net conversions."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "At this point, once we have seen that the actual underlying goal we had was not reached (increase fraction of paying users by asking them in advance if they have the time to invest in the course), we can only recommend to not continue with change. It may have caused a change in Gross conversion, but it didn't for net conversion."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## <font color='blue'>Part III: t-tests</font> "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "(1 point per item - total 13 points)\n",
+    "\n",
+    "Using the data sets *class1_data*, *class2_data* and *paired_data_df*, \n",
+    "answer the following questions:\n",
+    "\n",
+    "1. For a One sample t-test:\n",
+    "\n",
+    "  -  Test class1_data mean against 37.\n",
+    "  -  What is the test statistic value for the one sample t-test?\n",
+    "  -  What is the p-value of the test?\n",
+    "  -  Calculate a 95% confidence interval.\n",
+    "  -  Calculate a 99% confidence interval.<br><br>  \n",
+    "  \n",
+    "2. For a two sample t-test:\n",
+    "\n",
+    "  -  Perform a two-sample t-test of *class1_data* vs *class2_data*\n",
+    "  -  What is the value test statistic?\n",
+    "  -  What is the p-value?\n",
+    "  -  Is the test significant at the 5% level?<br><br>  \n",
+    "  \n",
+    "3. For a paired t-test:\n",
+    "\n",
+    "  -  Perform a paired t-test on the paired_data_df variables \"weight_before\" and \"weight_after\".\n",
+    "  -   What is the value of the test statistic?\n",
+    "  -   What is the p-value?\n",
+    "  -   Is the difference significant at the 5% level?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "\n",
+    "1. For a One sample t-test:\n",
+    "\n",
+    "  -  Test class1_data mean against 37.\n",
+    "  -  What is the test statistic value for the one sample t-test?\n",
+    "  -  What is the p-value of the test?\n",
+    "  -  Calculate a 95% confidence interval.\n",
+    "  -  Calculate a 99% confidence interval.<br><br>  \n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "class1 has 1706 data points\n",
+      "class2 has 2140 data points\n"
+     ]
+    }
+   ],
+   "source": [
+    "class1_data=pd.DataFrame(class1_data)\n",
+    "class2_data=pd.DataFrame(class2_data)\n",
+    "class1_data_sum=class1_data[0].sum()\n",
+    "class2_data_sum=class2_data[0].sum()\n",
+    "print(f'class1 has {class1_data_sum} data points')\n",
+    "print(f'class2 has {class2_data_sum} data points')\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 32,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Ttest_1sampResult(statistic=-3.052248024070148, pvalue=0.0036632690301621217)"
+      ]
+     },
+     "execution_count": 32,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "stats.ttest_1samp(a= class1_data[0],                # Sample data\n",
+    "                  popmean= 37)  # Pop mean"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The test statistic value for the one sample t-test is -3.05;\n",
+    "\n",
+    "The p-value of the test is 0.00366."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 33,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(33.803171198948654, 34.43682880105134)"
+      ]
+     },
+     "execution_count": 33,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "sigma = class1_data[0].std()/math.sqrt(1706)    # Sample stdev/sqrt(sample size)\n",
+    "\n",
+    "# This command produces a 95% confidence interval for class1 sample. \n",
+    "# Note that it would work for any sample.\n",
+    "# It assumes the 'center' is the 'loc' parameter, and 'standard deviation'\n",
+    "# is the 'scale' parameter.\n",
+    "stats.t.interval(0.95,                        # Confidence level\n",
+    "                 df = 1705,                     # Degrees of freedom\n",
+    "                 loc = class1_data[0].mean(), # Sample mean\n",
+    "                 scale= sigma)                # Standard dev estimate"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "95% confidence interval is (33.8,34.4). "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 34,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(33.70344566172181, 34.53655433827819)"
+      ]
+     },
+     "execution_count": 34,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "sigma = class1_data[0].std()/math.sqrt(1706)    # Sample stdev/sqrt(sample size)\n",
+    "\n",
+    "# This command produces a 95% confidence interval for class1 sample. \n",
+    "# Note that it would work for any sample.\n",
+    "# It assumes the 'center' is the 'loc' parameter, and 'standard deviation'\n",
+    "# is the 'scale' parameter.\n",
+    "stats.t.interval(0.99,                        # Confidence level\n",
+    "                 df = 1705,                     # Degrees of freedom\n",
+    "                 loc = class1_data[0].mean(), # Sample mean\n",
+    "                 scale= sigma)                # Standard dev estimate"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "99% confidence interval is (33.7,34.5), a wider range than the 95% confidence interval.  "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "2. For a two sample t-test:\n",
+    "\n",
+    "  -  Perform a two-sample t-test of *class1_data* vs *class2_data*\n",
+    "  -  What is the value test statistic?\n",
+    "  -  What is the p-value?\n",
+    "  -  Is the test significant at the 5% level?<br><br>  "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 35,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Ttest_indResult(statistic=-4.9513775514945335, pvalue=3.8006456519968182e-06)"
+      ]
+     },
+     "execution_count": 35,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "stats.ttest_ind(a= class1_data[0],\n",
+    "                b= class2_data[0],\n",
+    "                equal_var=False)    # Assume samples have equal variance? No, Never"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The value test statistic is -4.95;\n",
+    "\n",
+    "p-value is 3.8e-06. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "yes the test is significant on the 5% significance level. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "3. For a paired t-test:\n",
+    "\n",
+    "  -  Perform a paired t-test on the paired_data_df variables \"weight_before\" and \"weight_after\".\n",
+    "  -   What is the value of the test statistic?\n",
+    "  -   What is the p-value?\n",
+    "  -   Is the difference significant at the 5% level?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 36,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>weight_after</th>\n",
+       "      <th>weight_before</th>\n",
+       "      <th>weight_change</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>305.605006</td>\n",
+       "      <td>302.483642</td>\n",
+       "      <td>3.121364</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>240.526071</td>\n",
+       "      <td>241.417810</td>\n",
+       "      <td>-0.891739</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>226.017788</td>\n",
+       "      <td>235.463046</td>\n",
+       "      <td>-9.445258</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>165.913930</td>\n",
+       "      <td>170.400443</td>\n",
+       "      <td>-4.486513</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>252.590309</td>\n",
+       "      <td>249.751461</td>\n",
+       "      <td>2.838848</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   weight_after  weight_before  weight_change\n",
+       "0    305.605006     302.483642       3.121364\n",
+       "1    240.526071     241.417810      -0.891739\n",
+       "2    226.017788     235.463046      -9.445258\n",
+       "3    165.913930     170.400443      -4.486513\n",
+       "4    252.590309     249.751461       2.838848"
+      ]
+     },
+     "execution_count": 36,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "paired_data_df.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 37,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Ttest_relResult(statistic=2.5720175998568284, pvalue=0.011596444318439857)"
+      ]
+     },
+     "execution_count": 37,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "stats.ttest_rel(a = paired_data_df['weight_before'],\n",
+    "                b = paired_data_df['weight_after'])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The test statistic is 2.57;\n",
+    "\n",
+    "p-value is 0.011;\n",
+    "\n",
+    "Yes the difference is significant at the 5% level. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## <font color='blue'>Part IV: Bootstrap</font> \n",
+    "\n",
+    "(2 points per item - total 6 points)\n",
+    "\n",
+    "Using datasets *ctrl* and *test* perform a bootstrap comparison of means and answer the following questions:\n",
+    "\n",
+    "-  Are the means of control (ctrl) and test (test) significantly different at the 5% level?\n",
+    "-  What is the bootstrap estimate of the difference: $\\bar{x}_{test} - \\bar{x}_{ctrl}$?\n",
+    "-  Calculate a confidence interval for the difference in means."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 38,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "test = np.fromfile('test.dat', dtype=float) \n",
+    "ctrl = np.fromfile('ctrl.dat',dtype=float)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 39,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "2623674.0\n",
+      "2501247.0\n"
+     ]
+    }
+   ],
+   "source": [
+    "test=pd.DataFrame(test)\n",
+    "ctrl=pd.DataFrame(ctrl)\n",
+    "test_sum=test[0].sum()\n",
+    "ctrl_sum=ctrl[0].sum()\n",
+    "print(test_sum)\n",
+    "print(ctrl_sum)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 40,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import bootstrapped.bootstrap as bs\n",
+    "import bootstrapped.compare_functions as bs_compare\n",
+    "import bootstrapped.stats_functions as bs_stats"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 41,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# little A/B test\n",
+    "# score in test are 10% greater than ctrl (per record)\n",
+    "# 10% lift in test\n",
+    "lift = 1.1\n",
+    "test = np.fromfile('test.dat', dtype=float) \n",
+    "ctrl = np.fromfile('ctrl.dat',dtype=float)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 42,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<matplotlib.legend.Legend at 0x1c2334eb38>"
+      ]
+     },
+     "execution_count": 42,
+     "metadata": {},
+     "output_type": "execute_result"
+    },
+    {
+     "data": {
+      "image/png": "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\n",
+      "text/plain": [
+       "<Figure size 432x288 with 1 Axes>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "bins = np.linspace(20, 80, 20) # 20 bins of width 2 between 0 and 40.\n",
+    "\n",
+    "plt.hist(ctrl, bins=bins, label='Control')\n",
+    "plt.hist(test, bins=bins, label='Test', color='orange')\n",
+    "plt.title('Test/Ctrl Data')\n",
+    "plt.legend()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 43,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "4.894638554289123\n",
+      "4.894638554289123    (4.76311119334447, 5.019410168915318)\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Run an A/B test simulation ignoring the lengths of the series (average)\n",
+    "# Just what is the 'typical' value\n",
+    "# use percent change to compare test and control\n",
+    "\n",
+    "print(bs_compare.percent_change(test.mean(), ctrl.mean()))\n",
+    "\n",
+    "print(bs.bootstrap_ab(test, ctrl, bs_stats.mean, bs_compare.percent_change))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "According to the *bs_compare.percent_change* function, the test mean is about $4.89\\%$ higher than the control mean. This figure will vary from run to run --- why? Furthermore, the confidence interval is approximately (4.76,5.02) does not contain zero, indicating that the means are significantly different.  \n",
+    "  \n",
+    "The third argument of *bs.bootstrap_ab* is *stat_func* the test statistic we use for each bootstrap sample. The fourth argument is *compare_func*, the function we use to compare the *stat_func*'s for test and control."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 44,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "50000\n",
+      "50000\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(len(test))\n",
+    "print(len(ctrl))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 45,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "4.894638554289121\n",
+      "4.894638554289121    (4.768967086172104, 5.021694360446925)\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Run an A/B test simulation considering the lengths of the series (sum)\n",
+    "# consider the full 'volume' of values that are passed in\n",
+    "\n",
+    "print(bs_compare.percent_change(test.sum(), ctrl.sum()))\n",
+    "\n",
+    "print(bs.bootstrap_ab(\n",
+    "    test, \n",
+    "    ctrl, \n",
+    "    stat_func=bs_stats.sum,\n",
+    "    compare_func=bs_compare.percent_change\n",
+    "))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Here are the answers to the 3 questions: \n",
+    "    1. -  Are the means of control (ctrl) and test (test) significantly different at the 5% level?\n",
+    "    Ans: Yes the means are significantly different at the 5% level because 0 is not included in the confidence interval in the mean comparison cell. \n",
+    "    2. -  What is the bootstrap estimate of the difference: $\\bar{x}_{test} - \\bar{x}_{ctrl}$?\n",
+    "    Ans: the Bootstrap estimate is around 4.89% in the difference. \n",
+    "    3. -  Calculate a confidence interval for the difference in means.\n",
+    "    Ans: the confidence interval is (4.76, 5.02). \n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "\n"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.6.5"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 1
+}
